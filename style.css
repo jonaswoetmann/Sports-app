@@ -45,7 +45,8 @@ body {
     background: rgba(255,255,255,0.9);
     display: flex;
     justify-content: space-around;
-    align-items: center;
+    align-items: flex-start;
+    padding-top: 14px;
     border-top: 1px solid #ddd;
     backdrop-filter: blur(10px);
 }
@@ -59,7 +60,7 @@ body {
 /* Floating add button */
 #add-button {
     position: fixed;
-    bottom: 30px;
+    bottom: 64px;
     left: 50%;
     transform: translateX(-50%);
     width: 64px;
