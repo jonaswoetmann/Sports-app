@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Run Log</title>
+
+    <link rel="manifest" href="manifest.json" />
+    <link rel="stylesheet" href="style.css" />
+
+    <!-- iOS PWA support -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+</head>
+<body>
+
+<h1>🏃 Run Log</h1>
+
+<section id="add-run">
+    <input type="date" id="date">
+    <input type="number" id="distance" placeholder="Distance (km)" step="0.01">
+    <input type="number" id="time" placeholder="Time (min)" step="0.1">
+    <button onclick="addRun()">Add Run</button>
+</section>
+
+<section id="stats">
+    <p>Total distance: <span id="totalDistance">0</span> km</p>
+</section>
+
+<section id="runs"></section>
+
+<script src="app.js"></script>
+</body>
+</html>
