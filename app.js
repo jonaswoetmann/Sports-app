@@ -1,39 +1,38 @@
-let runs = JSON.parse(localStorage.getItem("runs")) || [];
+let currentPage = 1;
+const pages = document.getElementById("pages");
 
-if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("service-worker.js");
+/* Navigation */
+function goToPage(index) {
+    currentPage = index;
+    pages.style.transform = `translateX(-${index * 100}vw)`;
 }
 
-function addRun() {
-    const date = dateInput.value;
-    const distance = parseFloat(distanceInput.value);
-    const time = parseFloat(timeInput.value);
+/* Swipe handling */
+let startX = 0;
 
-    if (!date || !distance || !time) return;
+pages.addEventListener("touchstart", e => {
+    startX = e.touches[0].clientX;
+});
 
-    runs.push({ date, distance, time });
-    localStorage.setItem("runs", JSON.stringify(runs));
+pages.addEventListener("touchend", e => {
+    const endX = e.changedTouches[0].clientX;
+    const diff = endX - startX;
 
-    render();
+    if (Math.abs(diff) > 50) {
+        if (diff < 0 && currentPage < 2) currentPage++;
+        if (diff > 0 && currentPage > 0) currentPage--;
+        goToPage(currentPage);
+    }
+});
+
+/* Modal */
+function openModal() {
+    document.getElementById("modal").style.display = "flex";
 }
 
-function render() {
-    const runsDiv = document.getElementById("runs");
-    runsDiv.innerHTML = "";
-
-    let total = 0;
-
-    runs.forEach(run => {
-        total += run.distance;
-
-        const div = document.createElement("div");
-        div.className = "run";
-        div.innerText = `${run.date} – ${run.distance} km in ${run.time} min`;
-        runsDiv.appendChild(div);
-    });
-
-    document.getElementById("totalDistance").innerText = total.toFixed(1);
+function closeModal() {
+    document.getElementById("modal").style.display = "none";
 }
 
-render();
-
+/* Start on home */
+goToPage(1);

@@ -1,30 +1,90 @@
 body {
+    margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #f2f2f7;
+    overflow: hidden;
+}
+
+#app {
+    height: 100vh;
+    position: relative;
+}
+
+/* Pages */
+#pages {
+    display: flex;
+    width: 300vw;
+    height: 100vh;
+    transition: transform 0.3s ease;
+}
+
+.page {
+    width: 100vw;
     padding: 16px;
-    background: #f9f9f9;
+    box-sizing: border-box;
+    overflow-y: auto;
+    padding-bottom: 100px;
 }
 
-h1 {
-    text-align: center;
+/* Cards */
+.card {
+    background: white;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
 }
 
-input, button {
-    width: 100%;
-    padding: 10px;
-    margin: 6px 0;
-    font-size: 16px;
+/* Bottom nav */
+#bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: rgba(255,255,255,0.9);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    border-top: 1px solid #ddd;
+    backdrop-filter: blur(10px);
 }
 
-button {
+#bottom-nav button {
+    background: none;
+    border: none;
+    font-size: 22px;
+}
+
+/* Floating add button */
+#add-button {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
     background: #007aff;
     color: white;
+    font-size: 32px;
     border: none;
-    border-radius: 6px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.25);
 }
 
-.run {
+/* Modal */
+#modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+#modal-content {
     background: white;
-    padding: 10px;
-    margin-top: 8px;
-    border-radius: 6px;
+    width: 90%;
+    border-radius: 20px;
+    padding: 20px;
 }
