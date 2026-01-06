@@ -318,6 +318,60 @@ function differenceToAverage(runs) {
     return differenceToTarget(runs, avgTotal);
 }
 
+/*
+ Difference to scaled average year:
+ today cumulative − (avg-year cumulative today × target / avg-year total)
+*/
+function differenceToScaledAverage(runs, targetTotal) {
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const todayStr = today.toISOString().slice(0, 10);
+
+    // Current year cumulative today
+    const currentCurve = cumulativeDistanceByDay(runs, currentYear);
+    const currentToday = currentCurve.find(d => d.date === todayStr);
+    if (!currentToday) return 0;
+
+    const byYear = groupRunsByYear(runs);
+    const pastYears = Object.keys(byYear)
+        .map(Number)
+        .filter(y => y !== currentYear);
+
+    if (pastYears.length === 0) return 0;
+
+    let sumCumToday = 0;
+    let sumYearTotal = 0;
+    let count = 0;
+
+    pastYears.forEach(year => {
+        const curve = cumulativeDistanceByDay(runs, year);
+        const todayLike = curve.find(d => d.date.slice(5) === todayStr.slice(5));
+        const yearTotal = curve[curve.length - 1]?.cumulative ?? 0;
+
+        if (yearTotal > 0 && todayLike) {
+            sumCumToday += todayLike.cumulative;
+            sumYearTotal += yearTotal;
+            count++;
+        }
+    });
+
+    if (count === 0) return 0;
+
+    const avgCumToday = sumCumToday / count;
+    const avgYearTotal = sumYearTotal / count;
+
+    const scaledExpected = avgCumToday * (targetTotal / avgYearTotal);
+    return currentToday.cumulative - scaledExpected;
+}
+
+function differenceToScaled1800(runs) {
+    return differenceToScaledAverage(runs, 1800);
+}
+
+function differenceToScaled2100(runs) {
+    return differenceToScaledAverage(runs, 2100);
+}
+
 /* Example custom targets */
 function differenceTo1800(runs) {
     return differenceToTarget(runs, 1800);
@@ -327,23 +381,32 @@ function differenceTo2100(runs) {
     return differenceToTarget(runs, 2100);
 }
 
+
+
 // --- Stats Calculation UI population ---
 function updateStatsCalculations() {
     const runs = loadRuns();
+
     const diffToDate = differenceToDate(runs);
     const diffToAvg = differenceToAverage(runs);
     const diff1800 = differenceTo1800(runs);
     const diff2100 = differenceTo2100(runs);
+    const diffScaled1800 = differenceToScaled1800(runs);
+    const diffScaled2100 = differenceToScaled2100(runs);
 
     const elemDate = document.getElementById("calc-difference-to-date");
     const elemAvg = document.getElementById("calc-difference-to-average");
     const elem1800 = document.getElementById("calc-difference-1800");
     const elem2100 = document.getElementById("calc-difference-2100");
+    const elemScaled1800 = document.getElementById("calc-difference-scaled-1800");
+    const elemScaled2100 = document.getElementById("calc-difference-scaled-2100");
 
     if (elemDate) elemDate.innerText = diffToDate.toFixed(1);
     if (elemAvg) elemAvg.innerText = diffToAvg.toFixed(1);
     if (elem1800) elem1800.innerText = diff1800.toFixed(1);
     if (elem2100) elem2100.innerText = diff2100.toFixed(1);
+    if (elemScaled1800) elemScaled1800.innerText = diffScaled1800.toFixed(1);
+    if (elemScaled2100) elemScaled2100.innerText = diffScaled2100.toFixed(1);
 }
 
 // Call after drawing charts
