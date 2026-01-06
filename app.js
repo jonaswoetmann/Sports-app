@@ -547,7 +547,7 @@ document.getElementById("add-run-confirm").addEventListener("click", ()=>{
 
 // --- Strava OAuth Integration for GitHub Pages ---
 
-const STRAVA_CLIENT_ID = 194050;
+const STRAVA_CLIENT_ID =194050;
 const STRAVA_SCOPE = "activity:read_all";
 const STRAVA_REDIRECT_URI = "https://jonaswoetmann.github.io/Sports-app/";
 
