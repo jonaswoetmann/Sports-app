@@ -1,10 +1,17 @@
 let currentPage = 1;
 const pages = document.getElementById("pages");
+const navButtons = document.querySelectorAll("#bottom-nav button");
 
 /* Navigation */
 function goToPage(index) {
     currentPage = index;
     pages.style.transform = `translateX(-${index * 100}vw)`;
+
+    // toggle active dot
+    navButtons.forEach((btn, i) => {
+        if (i === index) btn.classList.add("active");
+        else btn.classList.remove("active");
+    });
 }
 
 /* Swipe handling */
