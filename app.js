@@ -34,12 +34,23 @@ pages.addEventListener("touchend", e => {
 
 /* Modal */
 function openModal() {
-    document.getElementById("modal").style.display = "flex";
+    const modal = document.getElementById("modal");
+    modal.classList.add("show");
+    // initialize date to today
+    document.getElementById("run-date").valueAsDate = new Date();
 }
 
 function closeModal() {
-    document.getElementById("modal").style.display = "none";
+    const modal = document.getElementById("modal");
+    modal.classList.remove("show");
 }
+
+// close modal when tapping outside content
+document.getElementById("modal").addEventListener("click", (e) => {
+    if (e.target.id === "modal") {
+        closeModal();
+    }
+});
 
 /* Start on home */
 goToPage(1);

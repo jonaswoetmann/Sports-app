@@ -54,8 +54,14 @@
 <div id="modal">
     <div id="modal-content">
         <h3>Add Run</h3>
-        <p>(Form goes here later)</p>
-        <button onclick="closeModal()">Close</button>
+        <label for="run-date" class="visually-hidden">Date</label>
+        <input type="date" id="run-date">
+
+        <label for="run-distance" class="visually-hidden">Distance (km)</label>
+        <input type="number" id="run-distance" placeholder="Distance (km)">
+
+        <label for="run-time" class="visually-hidden">Time (minutes)</label>
+        <input type="number" id="run-time" placeholder="Time (min)">
     </div>
 </div>
 
