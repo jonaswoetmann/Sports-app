@@ -263,10 +263,95 @@ function drawCharts() {
     });
 }
 
-// Redraw charts after adding a run
+/* Calculate difference to date: current year's cumulative today minus average cumulative of past years today */
+function differenceToDate(runs) {
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const dayStr = today.toISOString().slice(0,10);
+
+    const cumCurrent = cumulativeDistanceByDay(runs, currentYear).find(r => r.date === dayStr);
+    const byYear = groupRunsByYear(runs);
+    const pastYears = Object.keys(byYear).map(y => Number(y)).filter(y => y !== currentYear);
+
+    if (!cumCurrent) return 0;
+
+    // compute cumulative of past years for same day
+    const pastCumulatives = pastYears.map(y => {
+        const cumArray = cumulativeDistanceByDay(runs, y);
+        const found = cumArray.find(r => r.date.slice(5) === dayStr.slice(5)); // match MM-DD
+        return found ? found.cumulative : 0;
+    });
+
+    const avgPast = pastCumulatives.length ? pastCumulatives.reduce((a,b)=>a+b,0)/pastCumulatives.length : 0;
+
+    return cumCurrent.cumulative - avgPast;
+}
+
+/* Generic function for difference to target average per day */
+function differenceToTarget(runs, targetTotal) {
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const dayOfYear = Math.floor((today - new Date(today.getFullYear(),0,1))/(1000*60*60*24)) + 1;
+
+    const cumCurrent = cumulativeDistanceByDay(runs, currentYear).find(r => r.date === today.toISOString().slice(0,10));
+    if (!cumCurrent) return 0;
+
+    // evenly distributed daily target
+    const targetPerDay = targetTotal / 365;
+    return cumCurrent.cumulative - (targetPerDay * dayOfYear);
+}
+
+/* Example wrappers for previous averages or custom numbers */
+function differenceToAverage(runs) {
+    const byYear = groupRunsByYear(runs);
+    const currentYear = new Date().getFullYear();
+    const pastYears = Object.keys(byYear).map(y => Number(y)).filter(y => y !== currentYear);
+
+    // compute average total distance of past years
+    const totalPast = pastYears.map(y => {
+        const cumArray = cumulativeDistanceByDay(runs, y);
+        return cumArray.length ? cumArray[cumArray.length-1].cumulative : 0;
+    });
+
+    const avgTotal = totalPast.length ? totalPast.reduce((a,b)=>a+b,0)/totalPast.length : 0;
+
+    return differenceToTarget(runs, avgTotal);
+}
+
+/* Example custom targets */
+function differenceTo1800(runs) {
+    return differenceToTarget(runs, 1800);
+}
+
+function differenceTo2100(runs) {
+    return differenceToTarget(runs, 2100);
+}
+
+// --- Stats Calculation UI population ---
+function updateStatsCalculations() {
+    const runs = loadRuns();
+    const diffToDate = differenceToDate(runs);
+    const diffToAvg = differenceToAverage(runs);
+    const diff1800 = differenceTo1800(runs);
+    const diff2100 = differenceTo2100(runs);
+
+    const elemDate = document.getElementById("calc-difference-to-date");
+    const elemAvg = document.getElementById("calc-difference-to-average");
+    const elem1800 = document.getElementById("calc-difference-1800");
+    const elem2100 = document.getElementById("calc-difference-2100");
+
+    if (elemDate) elemDate.innerText = diffToDate.toFixed(1);
+    if (elemAvg) elemAvg.innerText = diffToAvg.toFixed(1);
+    if (elem1800) elem1800.innerText = diff1800.toFixed(1);
+    if (elem2100) elem2100.innerText = diff2100.toFixed(1);
+}
+
+// Call after drawing charts
+drawCharts();
+updateStatsCalculations();
+
+// Also update after adding a run
 document.getElementById("add-run-confirm").addEventListener("click", ()=>{
     drawCharts();
+    updateStatsCalculations();
 });
-
-// Initial draw
-drawCharts();
