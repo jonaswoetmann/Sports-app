@@ -2,6 +2,26 @@ let currentPage = 1;
 const pages = document.getElementById("pages");
 const navButtons = document.querySelectorAll("#bottom-nav button");
 
+const STORAGE_KEY = "runs";
+
+/* Load all runs */
+function loadRuns() {
+    const data = localStorage.getItem(STORAGE_KEY);
+    return data ? JSON.parse(data) : [];
+}
+
+/* Save full run list */
+function saveRuns(runs) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(runs));
+}
+
+/* Add a single run */
+function addRun(run) {
+    const runs = loadRuns();
+    runs.push(run);
+    saveRuns(runs);
+}
+
 /* Navigation */
 function goToPage(index) {
     currentPage = index;
@@ -56,7 +76,27 @@ document.getElementById("modal").addEventListener("click", (e) => {
 });
 
 document.getElementById("add-run-confirm").addEventListener("click", () => {
+    const date = document.getElementById("run-date").value;
+    const distance = parseFloat(document.getElementById("run-distance").value);
+    const timeMinutes = parseFloat(document.getElementById("run-time").value);
+
+    if (!date || !distance || !timeMinutes) {
+        alert("Please fill in all fields");
+        return;
+    }
+
+    const run = {
+        id: `manual_${Date.now()}`,
+        date,
+        distanceKm: distance,
+        durationSec: Math.round(timeMinutes * 60),
+        source: "manual"
+    };
+
+    addRun(run);
     closeModal();
+
+    console.log("Saved runs:", loadRuns());
 });
 
 /* Start on home */
