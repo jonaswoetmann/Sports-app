@@ -174,6 +174,63 @@ function averageYearCurve(runs) {
     return avgCurve;
 }
 
+/*
+ Find comparable day in average year:
+ The latest day where avg-year cumulative <= current year's cumulative today
+ Returns an object: { dayIndex, dateLabel, cumulative }
+*/
+function comparableDayInAverageYear(runs) {
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const todayStr = today.toISOString().slice(0, 10);
+
+    // Current year cumulative today
+    const currentCurve = cumulativeDistanceByDay(runs, currentYear);
+    const currentToday = currentCurve.find(d => d.date === todayStr);
+    if (!currentToday) return null;
+
+    const currentCum = currentToday.cumulative;
+
+    // Average year curve
+    const avgCurve = averageYearCurve(runs);
+
+    // Find last day where avg cumulative <= current cumulative
+    let comparableIndex = 0;
+    for (let i = 0; i < avgCurve.length; i++) {
+        if (avgCurve[i].cumulative <= currentCum) {
+            comparableIndex = i;
+        } else {
+            break;
+        }
+    }
+
+    // Convert day index to readable date (using non-leap reference year)
+    const refYear = 2001; // non-leap year
+    const date = new Date(refYear, 0, 1);
+    date.setDate(date.getDate() + comparableIndex);
+
+    return {
+        dayIndex: comparableIndex,
+        dateLabel: date.toISOString().slice(5, 10), // MM-DD
+        cumulative: avgCurve[comparableIndex].cumulative
+    };
+}
+
+/*
+ Calculate days ahead / behind compared to average year
+ Positive = ahead, Negative = behind
+*/
+function daysAheadBehindAverage(runs) {
+    const today = new Date();
+    const dayOfYear =
+        Math.floor((today - new Date(today.getFullYear(), 0, 1)) / (1000 * 60 * 60 * 24));
+
+    const comparable = comparableDayInAverageYear(runs);
+    if (!comparable) return 0;
+
+    return comparable.dayIndex - dayOfYear;
+}
+
 // Draw charts using cumulativeDistanceByDay
 function drawCharts() {
     const runs = loadRuns();
@@ -381,6 +438,63 @@ function differenceTo2100(runs) {
     return differenceToTarget(runs, 2100);
 }
 
+// --- Year-end prediction calculations ---
+// Helper: context for today
+function getTodayContext(runs) {
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const todayStr = today.toISOString().slice(0, 10);
+
+    const dayOfYear =
+        Math.floor((today - new Date(currentYear, 0, 1)) / (1000 * 60 * 60 * 24)) + 1;
+
+    // Current year cumulative today
+    const currentCurve = cumulativeDistanceByDay(runs, currentYear);
+    const currentToday = currentCurve.find(d => d.date === todayStr);
+    if (!currentToday) return null;
+
+    // Average year cumulative
+    const avgCurve = averageYearCurve(runs);
+    const avgToday = avgCurve[dayOfYear - 1]?.cumulative ?? 0;
+
+    // Average year total (Dec 31)
+    const avgTotal = avgCurve[avgCurve.length - 1]?.cumulative ?? 0;
+
+    return {
+        dayOfYear,
+        currentCum: currentToday.cumulative,
+        avgCumToday: avgToday,
+        avgTotal
+    };
+}
+
+// Step 1: current cum vs average year (current / average-to-date)
+function distRatio(runs) {
+    const ctx = getTodayContext(runs);
+    if (!ctx || ctx.avgCumToday === 0) return 0;
+    return ctx.currentCum / ctx.avgCumToday;
+}
+
+// Step 2: prediction multiplier
+function predictionMultiplier(runs) {
+    const ctx = getTodayContext(runs);
+    if (!ctx) return 1;
+
+    const ratio = distRatio(runs);
+    const progressFactor = Math.pow(ctx.dayOfYear / 365, 0.5);
+
+    return 1 + progressFactor * ratio;
+}
+
+// Step 3: predicted total distance for the year
+function predictedYearTotal(runs) {
+    const ctx = getTodayContext(runs);
+    if (!ctx) return 0;
+
+    const multiplier = predictionMultiplier(runs);
+    return ctx.avgTotal * multiplier;
+}
+
 
 
 // --- Stats Calculation UI population ---
@@ -393,6 +507,10 @@ function updateStatsCalculations() {
     const diff2100 = differenceTo2100(runs);
     const diffScaled1800 = differenceToScaled1800(runs);
     const diffScaled2100 = differenceToScaled2100(runs);
+    const daysAheadBehind = daysAheadBehindAverage(runs);
+    const predict = predictedYearTotal(runs);
+    const gain = distRatio(runs);
+    const multiplier = predictionMultiplier(runs);
 
     const elemDate = document.getElementById("calc-difference-to-date");
     const elemAvg = document.getElementById("calc-difference-to-average");
@@ -400,6 +518,10 @@ function updateStatsCalculations() {
     const elem2100 = document.getElementById("calc-difference-2100");
     const elemScaled1800 = document.getElementById("calc-difference-scaled-1800");
     const elemScaled2100 = document.getElementById("calc-difference-scaled-2100");
+    const elemDays = document.getElementById("calc-days-ahead-behind");
+    const elemPredict = document.getElementById("calc-predict");
+    const elemGain = document.getElementById("calc-gain");
+    const elemMultiplier = document.getElementById("calc-multiplier");
 
     if (elemDate) elemDate.innerText = diffToDate.toFixed(1);
     if (elemAvg) elemAvg.innerText = diffToAvg.toFixed(1);
@@ -407,6 +529,10 @@ function updateStatsCalculations() {
     if (elem2100) elem2100.innerText = diff2100.toFixed(1);
     if (elemScaled1800) elemScaled1800.innerText = diffScaled1800.toFixed(1);
     if (elemScaled2100) elemScaled2100.innerText = diffScaled2100.toFixed(1);
+    if (elemDays) elemDays.innerText = daysAheadBehind;
+    if (elemPredict) elemPredict.innerText = predict.toFixed(1);
+    if (elemGain) elemGain.innerText = gain.toFixed(1);
+    if (elemMultiplier) elemMultiplier.innerText = multiplier.toFixed(1);
 }
 
 // Call after drawing charts
