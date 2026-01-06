@@ -202,10 +202,21 @@ function drawCharts() {
         },
         options: {
             responsive: true,
-            plugins: { legend:{ position: "bottom" } },
+            plugins: {
+                legend: { position: "bottom" }
+            },
             scales: {
-                x: { display:true, title:{ display:true, text:"Date" } },
-                y: { display:true, title:{ display:true, text:"Cumulative Distance (km)" } }
+                x: {
+                    display: false, // hide X-axis labels and grid
+                    grid: { display: false }
+                },
+                y: {
+                    display: false, // hide Y-axis labels and grid
+                    grid: { display: false }
+                }
+            },
+            elements: {
+                point: { radius: 0 } // remove data point markers
             }
         }
     });
@@ -229,10 +240,19 @@ function drawCharts() {
         data: { labels: cumCurrentYear.map(r => r.date), datasets },
         options: {
             responsive: true,
-            plugins:{ legend:{ position:"bottom" }},
+            plugins: { legend: { position: "bottom" } },
             scales: {
-                x: { display:true, title:{ display:true, text:"Date" }},
-                y: { display:true, title:{ display:true, text:"Cumulative Distance (km)" }}
+                x: {
+                    display: false, // hide X-axis labels and grid
+                    grid: { display: false }
+                },
+                y: {
+                    display: false, // hide Y-axis labels and grid
+                    grid: { display: false }
+                }
+            },
+            elements: {
+                point: { radius: 0 } // remove data point markers
             }
         }
     });
