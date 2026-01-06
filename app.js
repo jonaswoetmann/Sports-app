@@ -120,52 +120,57 @@ function sortRunsByDate(runs) {
     return runs.slice().sort((a, b) => new Date(a.date) - new Date(b.date));
 }
 
-/* Build cumulative distance for each day of the year */
+/* Compute cumulative distance per day for a specific year (full year) */
 function cumulativeDistanceByDay(runs, year) {
     const start = new Date(year, 0, 1);
-    const today = new Date();
-    const end = (year === today.getFullYear()) ? today : new Date(year, 11, 31);
+    const end = new Date(year, 11, 31);
 
+    // Sort runs and sum cumulative per date
+    const runsOfYear = sortRunsByDate(runs.filter(r => new Date(r.date).getFullYear() === year));
     const runsByDate = {};
     let total = 0;
-    sortRunsByDate(runs.filter(r => new Date(r.date).getFullYear() === year))
-        .forEach(run => {
-            total += run.distanceKm;
-            runsByDate[run.date] = total;
-        });
+    runsOfYear.forEach(run => {
+        total += run.distanceKm;
+        runsByDate[run.date] = total;
+    });
 
+    // Build cumulative array for every day of the year
     const result = [];
+    let runningTotal = 0;
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
         const dateStr = d.toISOString().slice(0, 10);
-        if (runsByDate[dateStr] !== undefined) total = runsByDate[dateStr];
-        result.push({ date: dateStr, cumulative: total });
+        if (runsByDate[dateStr] !== undefined) runningTotal = runsByDate[dateStr];
+        result.push({ date: dateStr, cumulative: runningTotal });
     }
     return result;
 }
 
-// Average year curve
+/* Compute average cumulative curve across past years (full year) */
 function averageYearCurve(runs) {
     const byYear = groupRunsByYear(runs);
-    const dayTotals = {};
-    Object.keys(byYear).forEach(y => {
-        byYear[y].forEach(run => {
-            const date = new Date(run.date);
-            const start = new Date(date.getFullYear(), 0, 1);
-            const dayOfYear = Math.floor((date - start)/(1000*60*60*24));
-            if (!dayTotals[dayOfYear]) dayTotals[dayOfYear] = [];
-            dayTotals[dayOfYear].push(run.distanceKm);
-        });
+    const pastYears = Object.keys(byYear).map(y => Number(y)).filter(y => y !== new Date().getFullYear());
+
+    // Build cumulative for each past year
+    const yearCurves = {};
+    pastYears.forEach(year => {
+        yearCurves[year] = cumulativeDistanceByDay(runs, year);
     });
+
+    // Always use 365 or 366 days depending on year
+    const maxDays = 366;
     const avgCurve = [];
-    let runningTotal = 0;
-    const maxDay = 365;
-    for (let i=0;i<=maxDay;i++){
-        if(dayTotals[i]){
-            const avg = dayTotals[i].reduce((a,b)=>a+b,0)/dayTotals[i].length;
-            runningTotal += avg;
-        }
-        avgCurve.push({ dayOfYear:i, cumulative: runningTotal });
+    for (let i = 0; i < maxDays; i++) {
+        let total = 0;
+        let count = 0;
+        pastYears.forEach(year => {
+            if (yearCurves[year][i]) {
+                total += yearCurves[year][i].cumulative;
+                count++;
+            }
+        });
+        avgCurve.push({ dayOfYear: i, cumulative: count > 0 ? total / count : 0 });
     }
+
     return avgCurve;
 }
 
@@ -187,7 +192,7 @@ function drawCharts() {
             labels: cumCurrentYear.map(r => r.date),
             datasets: [
                 {
-                    label: `Current Year (${currentYear})`,
+                    label: `${currentYear}`,
                     data: cumCurrentYear.map(r => r.cumulative),
                     borderColor: "#007aff",
                     fill: false
@@ -211,7 +216,7 @@ function drawCharts() {
                     grid: { display: false }
                 },
                 y: {
-                    display: false, // hide Y-axis labels and grid
+                    display: true, // hide Y-axis labels and grid
                     grid: { display: false }
                 }
             },
