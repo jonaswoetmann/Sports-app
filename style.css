@@ -103,7 +103,7 @@ body {
 #modal {
     position: fixed;
     inset: 0;
-    background: rgba(0,100,0,0.4);
+    background: rgba(0,0,0,0.4);
     display: flex; /* always flex so transform works */
     align-items: flex-end;
     justify-content: center;
@@ -144,10 +144,6 @@ body {
     border-radius: 8px;
     border: 1px solid #ccc;
     text-align: left;
-}
-
-#modal-content input[type="date"] {
-    text-align: center;
 }
 
 .visually-hidden {
