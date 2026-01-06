@@ -43,6 +43,9 @@ function openModal() {
 function closeModal() {
     const modal = document.getElementById("modal");
     modal.classList.remove("show");
+
+    document.getElementById("run-distance").value = "";
+    document.getElementById("run-time").value = "";
 }
 
 // close modal when tapping outside content
@@ -50,6 +53,10 @@ document.getElementById("modal").addEventListener("click", (e) => {
     if (e.target.id === "modal") {
         closeModal();
     }
+});
+
+document.getElementById("add-run-confirm").addEventListener("click", () => {
+    closeModal();
 });
 
 /* Start on home */
