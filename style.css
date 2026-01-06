@@ -78,17 +78,16 @@ body {
 /* Floating add button */
 #add-button {
     position: fixed;
-    bottom: 64px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 64px;
-    height: 64px;
+    bottom: calc(64px + 30px); /* nav bar height + padding */
+    right: 16px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     background: #007aff;
     color: white;
-    font-size: 32px;
+    font-size: 24px;
     border: none;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.25);
 }
 
 /* Modal */
