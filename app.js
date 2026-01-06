@@ -309,7 +309,7 @@ function drawCharts() {
                     grid: { display: false }
                 },
                 y: {
-                    display: false, // hide Y-axis labels and grid
+                    display: true, // hide Y-axis labels and grid
                     grid: { display: false }
                 }
             },
@@ -543,4 +543,82 @@ updateStatsCalculations();
 document.getElementById("add-run-confirm").addEventListener("click", ()=>{
     drawCharts();
     updateStatsCalculations();
+});
+
+// --- Strava OAuth Integration for GitHub Pages ---
+
+const STRAVA_CLIENT_ID = 194050;
+const STRAVA_SCOPE = "activity:read_all";
+const STRAVA_REDIRECT_URI = "https://jonaswoetmann.github.io/Sports-app/";
+
+// Launch Strava OAuth
+const stravaBtn = document.getElementById("connect-strava");
+if (stravaBtn) {
+    stravaBtn.addEventListener("click", () => {
+        const authUrl = `https://www.strava.com/oauth/authorize?client_id=${STRAVA_CLIENT_ID}&redirect_uri=${encodeURIComponent(STRAVA_REDIRECT_URI)}&response_type=token&scope=${STRAVA_SCOPE}`;
+        window.location.href = authUrl;
+    });
+}
+
+// Extract access token from URL hash after redirect
+function getAccessTokenFromUrl() {
+    const hash = window.location.hash;
+    if (!hash) return null;
+    const params = new URLSearchParams(hash.substring(1));
+    return params.get("access_token");
+}
+
+// Fetch Strava runs and convert to app format
+async function fetchStravaRuns(accessToken) {
+    let allRuns = [];
+    let page = 1;
+    const perPage = 50;
+
+    while (true) {
+        const res = await fetch(`https://www.strava.com/api/v3/athlete/activities?per_page=${perPage}&page=${page}`, {
+            headers: { Authorization: `Bearer ${accessToken}` }
+        });
+        const data = await res.json();
+        if (!data || data.length === 0) break;
+
+        data.forEach(activity => {
+            if (activity.type === "Run") {
+                allRuns.push({
+                    id: `strava_${activity.id}`,
+                    date: activity.start_date.slice(0, 10),
+                    distanceKm: activity.distance / 1000,
+                    durationSec: activity.moving_time,
+                    source: "strava"
+                });
+            }
+        });
+
+        page++;
+    }
+
+    return allRuns;
+}
+
+// Import Strava runs and update app
+async function importStravaRuns() {
+    const token = getAccessTokenFromUrl();
+    if (!token) return;
+
+    const runs = await fetchStravaRuns(token);
+    runs.forEach(run => addRun(run));
+
+    drawCharts();
+    updateStatsCalculations();
+
+    console.log("Imported Strava runs:", runs);
+
+    // Clear token from URL to avoid re-import
+    history.replaceState(null, null, "/Sports-app/");
+}
+
+// On page load, check if redirected from Strava with token
+window.addEventListener("load", () => {
+    if (window.location.hash.includes("access_token")) {
+        importStravaRuns();
+    }
 });
