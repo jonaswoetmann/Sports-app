@@ -528,8 +528,8 @@ function updateStatsCalculations() {
     const diffScaled2100 = differenceToScaled2100(runs);
     const daysAheadBehind = daysAheadBehindAverage(runs);
     const predict = predictedYearTotal(runs);
-    const gain = distRatio(runs);
-    const multiplier = predictionMultiplier(runs);
+    const gain = (distRatio(runs) - 1) * 100;
+    const multiplier = (predictionMultiplier(runs) - 1) * 100;
     const elemDate = document.getElementById("calc-difference-to-date");
     const elemAvg = document.getElementById("calc-difference-to-average");
     const elem1800 = document.getElementById("calc-difference-1800");
