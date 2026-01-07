@@ -480,7 +480,7 @@ function getTodayContext(runs) {
     if (!currentToday) return null;
     // Average year cumulative
     const avgCurve = averageYearCurve(runs);
-    const avgToday = avgCurve[dayOfYear - 1]?.cumulative ?? 0;
+    const avgToday = avgCurve[dayOfYear]?.cumulative ?? 0;
     // Average year total (Dec 31)
     const avgTotal = avgCurve[avgCurve.length - 1]?.cumulative ?? 0;
     return {
