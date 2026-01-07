@@ -497,6 +497,21 @@ function distRatio(runs) {
     if (!ctx || ctx.avgCumToday === 0) return 0;
     return ctx.currentCum / ctx.avgCumToday;
 }
+// Temporary test function
+function testDistRatio() {
+    const runs = loadRunsFiltered(); // or just loadRuns() if you want all runs
+    const ctx = getTodayContext(runs);
+    if (!ctx) {
+        console.log("No context available for today");
+        return;
+    }
+    console.log("current cumulative distance:", ctx.currentCum);
+    console.log("average year cumulative today:", ctx.avgCumToday);
+    console.log("distRatio:", distRatio(runs));
+}
+
+// Call it manually
+testDistRatio();
 
 // Step 2: prediction multiplier
 function predictionMultiplier(runs) {
