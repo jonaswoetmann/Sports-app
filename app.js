@@ -545,22 +545,29 @@ document.getElementById("add-run-confirm").addEventListener("click", ()=>{
     updateStatsCalculations();
 });
 
-// --- Strava OAuth Integration for GitHub Pages ---
-
-const STRAVA_CLIENT_ID =194050;
+// --- Strava OAuth (Netlify-backed, Authorization Code flow) ---
+const STRAVA_CLIENT_ID = 194050;
 const STRAVA_SCOPE = "activity:read_all";
-const STRAVA_REDIRECT_URI = "https://jonaswoetmann.github.io/Sports-app/";
+const STRAVA_REDIRECT_URI =
+    "https://sports-app-jonaswoetmann.netlify.app/.netlify/functions/strava-callback";
 
 // Launch Strava OAuth
 const stravaBtn = document.getElementById("connect-strava");
 if (stravaBtn) {
     stravaBtn.addEventListener("click", () => {
-        const authUrl = `https://www.strava.com/oauth/authorize?client_id=${STRAVA_CLIENT_ID}&redirect_uri=${encodeURIComponent(STRAVA_REDIRECT_URI)}&response_type=token&scope=${STRAVA_SCOPE}`;
+        const authUrl =
+            "https://www.strava.com/oauth/authorize" +
+            `?client_id=${STRAVA_CLIENT_ID}` +
+            `&redirect_uri=${encodeURIComponent(STRAVA_REDIRECT_URI)}` +
+            `&response_type=code` +
+            `&scope=${STRAVA_SCOPE}` +
+            `&approval_prompt=auto`;
+
         window.location.href = authUrl;
     });
 }
 
-// Extract access token from URL hash after redirect
+// Extract access token injected by Netlify redirect (#access_token=...)
 function getAccessTokenFromUrl() {
     const hash = window.location.hash;
     if (!hash) return null;
@@ -568,18 +575,24 @@ function getAccessTokenFromUrl() {
     return params.get("access_token");
 }
 
-// Fetch Strava runs and convert to app format
+// Fetch Strava runs
 async function fetchStravaRuns(accessToken) {
     let allRuns = [];
     let page = 1;
     const perPage = 50;
 
     while (true) {
-        const res = await fetch(`https://www.strava.com/api/v3/athlete/activities?per_page=${perPage}&page=${page}`, {
-            headers: { Authorization: `Bearer ${accessToken}` }
-        });
+        const res = await fetch(
+            `https://www.strava.com/api/v3/athlete/activities?per_page=${perPage}&page=${page}`,
+            {
+                headers: { Authorization: `Bearer ${accessToken}` }
+            }
+        );
+
+        if (!res.ok) break;
+
         const data = await res.json();
-        if (!data || data.length === 0) break;
+        if (!Array.isArray(data) || data.length === 0) break;
 
         data.forEach(activity => {
             if (activity.type === "Run") {
@@ -599,24 +612,29 @@ async function fetchStravaRuns(accessToken) {
     return allRuns;
 }
 
-// Import Strava runs and update app
+// Import Strava runs (deduplicated)
 async function importStravaRuns() {
     const token = getAccessTokenFromUrl();
     if (!token) return;
 
-    const runs = await fetchStravaRuns(token);
-    runs.forEach(run => addRun(run));
+    const existingRuns = loadRuns();
+    const existingIds = new Set(existingRuns.map(r => r.id));
+
+    const stravaRuns = await fetchStravaRuns(token);
+    const newRuns = stravaRuns.filter(r => !existingIds.has(r.id));
+
+    newRuns.forEach(run => addRun(run));
 
     drawCharts();
     updateStatsCalculations();
 
-    console.log("Imported Strava runs:", runs);
+    console.log(`Imported ${newRuns.length} new Strava runs`);
 
-    // Clear token from URL to avoid re-import
-    history.replaceState(null, null, "/Sports-app/");
+    // Clean URL
+    history.replaceState(null, "", window.location.pathname);
 }
 
-// On page load, check if redirected from Strava with token
+// On page load, check for Strava token
 window.addEventListener("load", () => {
     if (window.location.hash.includes("access_token")) {
         importStravaRuns();
