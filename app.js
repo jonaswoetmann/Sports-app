@@ -519,7 +519,7 @@ function predictionMultiplier(runs) {
     if (!ctx) return 1;
     const ratio = distRatio(runs);
     const progressFactor = Math.pow(ctx.dayOfYear / 365, 0.5);
-    return 1 + progressFactor * ratio;
+    return progressFactor * (ratio - 1) * 100;
 }
 
 // Step 3: predicted total distance for the year
